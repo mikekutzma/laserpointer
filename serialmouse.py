@@ -9,9 +9,9 @@ ser = serial.Serial('/dev/ttyACM0',9600)
 class MyFirstGUI:
     def __init__(self, master):
         self.master = master
-        master.title("A simple GUI")
+        master.title("SerialMouse")
 
-        self.label = Label(master, text="This is our first GUI!")
+        self.label = Label(master, text="Mouse control")
         self.label.pack()
 
         self.close_button = Button(master, text="Close", command=master.quit)
