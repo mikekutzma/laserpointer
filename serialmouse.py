@@ -2,7 +2,7 @@ from tkinter import Tk, Label, Button
 import serial
 from time import sleep
 
-ser = serial.Serial('/dev/ttyACM1',9600)
+ser = serial.Serial('/dev/ttyACM0',9600)
 class MyFirstGUI:
     def __init__(self, master):
         self.master = master
@@ -10,9 +10,6 @@ class MyFirstGUI:
 
         self.label = Label(master, text="This is our first GUI!")
         self.label.pack()
-
-        self.greet_button = Button(master, text="Greet", command=self.greet)
-        self.greet_button.pack()
 
         self.close_button = Button(master, text="Close", command=master.quit)
         self.close_button.pack()
