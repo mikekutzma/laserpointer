@@ -7,16 +7,13 @@ int xpin = 11;
 int ypin = 12;
 int lpin = 4;
 
-int posy = 0;
-int my = 1;
-int dy = 3;
-int maxy = 160;
+const byte numChars = 32;
+char receivedChars[numChars];
+char tempChars[numChars];        // temporary array for use when parsing
 
+int posy = 0;
 
 int posx = 0;
-int mx = 1;
-int dx = 1;
-int maxx = 160;
 
 int dt = 50;
 
@@ -26,45 +23,83 @@ void setup() {
   digitalWrite(lpin,HIGH);
   Serial.begin(9600);
   Serial.setTimeout(50);
-  String mystring = "12;65";
-  Serial.println(mystring.substring(0,String(mystring).indexOf(';')));
 }
 
+boolean newData = false;
+
+//============
+
 void loop() {
-/*  
-  while(true){
-    if(posx<0){
-      mx = 1;
-      posx=0;
-    } else if(posx>maxx){
-      mx=-1;
-      posx=maxx;
+    recvWithStartEndMarkers();
+    if (newData == true) {
+        strcpy(tempChars, receivedChars);
+            // this temporary copy is necessary to protect the original data
+            //   because strtok() used in parseData() replaces the commas with \0
+        parseData();
+        updatePositions();
+        newData = false;
     }
-    if(posy<0){
-      my = 1;
-      posy=0;
-    } else if(posy>maxy){
-      my=-1;
-      posy=maxy;
+}
+
+//============
+
+void recvWithStartEndMarkers() {
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
+
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
     }
+}
+
+//============
+
+void parseData() {      // split the data into its parts
+
+    char * strtokIndx; // this is used by strtok() as an index
+
+    strtokIndx = strtok(tempChars,",");      // get the first part - the string
+    posx = atoi(strtokIndx);     // convert this part to an integer
+
+    strtokIndx = strtok(NULL, ",");
+    posy = atoi(strtokIndx);     // convert this part to a float
+
+}
+
+//============
+
+void updatePositions() {
+    Serial.print("posx ");
+    Serial.println(posx);
+    Serial.print("posy ");
+    Serial.println(posy);
     servox.write(posx);
     servoy.write(posy);
-    posx = posx+(mx*dx);
-    posy = posy+(my*dy);
-    delay(dt);
-  }
-  */
-  if(Serial.available()){
-    String posstring = Serial.readString();
-    int delind = posstring.indexOf(';');
-    posx = posstring.substring(0,delind).toInt();
-    posy = posstring.substring(delind+1).toInt();
-  }
-  servoy.write(posy);
-  servox.write(posx);
-  delay(dt);
-  
 }
+
 
 
 
