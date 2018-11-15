@@ -34,14 +34,19 @@ class FacePos:
         'uniform': uniform_weighted,
         'sqrt': square_root_weighted,
     }
+    writemap = {
+        'deg': 'Degree',
+        'micro': 'Microsecond',
+    }
 
-    def __init__(self, ser=None, logger=None, memory=10, weight_str='uniform', startpos=(80, 80)):
+    def __init__(self, ser=None, logger=None, memory=10, weight_str='uniform', startpos=(80, 80), writetype='deg'):
         self.ser = ser
         self._logger = logger
         self.pos = (80, 80)
         self.q = deque([], maxlen=memory)
         self.weight_func = self.funcmap.get(weight_str, uniform_weighted)
         self.current_pos = startpos
+        self.writetype = writetype
 
     def update(self, px, py):
         """
@@ -61,8 +66,16 @@ class FacePos:
         return self.transform(px, py)
 
     def transform(self, x, y):
-        px = 0.0666 * x + 59.3
-        py = -0.06015 * y + 102.015
+        if self.writetype == 'deg':
+            px = 0.0666 * x + 59.3
+            py = -0.06015 * y + 102.015
+        elif self.writetype == 'micro':
+            px = x
+            py = y
+        else:
+            px = x
+            py = y
+
         return px, py
 
     def write(self, thresh=1):
@@ -76,7 +89,7 @@ class FacePos:
 
     def _swrite(self):
         x, y = self.current_pos
-        ser_str = '<' + str(int(x)) + ',' + str(int(y)) + '>'
+        ser_str = '<' + self.writemap[self.writetype] + ',' + str(int(x)) + ',' + str(int(y)) + '>'
         if self.ser is not None:
             self.ser.write(ser_str.encode('utf-8'))
             self.ser.flush()
@@ -95,6 +108,7 @@ if __name__ == '__main__':
     parser.add_argument('--debug', '-d', action='store_true')
     parser.add_argument('--weights', '-w', default='uniform', type=str)
     parser.add_argument('--memory', '-m', default=10, type=int)
+    parser.add_argument('--writetype', '-wt', default='deg', type=str)
     args = parser.parse_args()
 
     ser = None
