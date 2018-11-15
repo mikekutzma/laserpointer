@@ -7,13 +7,15 @@ int xpin = 11;
 int ypin = 12;
 int lpin = 4;
 
-const byte numChars = 32;
+const byte numChars = 64;
 char receivedChars[numChars];
 char tempChars[numChars];        // temporary array for use when parsing
 
-int posy = 0;
-
 int posx = 0;
+int posy = 0;
+char cmdStr[numChars] = {0};
+int posx_new = 0;
+int posy_new = 0;
 
 int dt = 50;
 
@@ -82,24 +84,56 @@ void parseData() {      // split the data into its parts
     char * strtokIndx; // this is used by strtok() as an index
 
     strtokIndx = strtok(tempChars,",");      // get the first part - the string
-    posx = atoi(strtokIndx);     // convert this part to an integer
+    strcpy(cmdStr, strtokIndx);
+    
+    strtokIndx = strtok(NULL, ",");
+    posx_new = atoi(strtokIndx);     // convert this part to an integer
 
     strtokIndx = strtok(NULL, ",");
-    posy = atoi(strtokIndx);     // convert this part to a float
+    posy_new = atoi(strtokIndx);     
 
 }
 
 //============
 
 void updatePositions() {
+  
+    if (String(cmdStr)=="Degree"){ // between 0 and 160
+        Serial.println(0);
+        posx = posx_new;
+        posy = posy_new;
+        servox.write(posx);
+        servoy.write(posy);
+    } else if (String(cmdStr)=="Microsecond") { // between 1000 and 2000
+      Serial.println(1);
+        posx = posx_new;
+        posy = posy_new;
+        servox.writeMicroseconds(posx);
+        servoy.writeMicroseconds(posy);
+    } else if (String(cmdStr)=="Move_Degree") {
+      Serial.println(2);
+        posx += posx_new;
+        posy += posy_new;
+        servox.write(posx);
+        servoy.write(posy);
+    } else if (String(cmdStr)=="Move_Microsecond") {
+      Serial.println(3);
+        posx += posx_new;
+        posy += posy_new;
+        servox.writeMicroseconds(posx);
+        servoy.writeMicroseconds(posy);
+    } else {
+        Serial.println(4);
+        posx = posx_new;
+        posy = posy_new;
+        servox.write(posx);
+        servoy.write(posy);
+    }
+
+    Serial.println(cmdStr);
     Serial.print("posx ");
     Serial.println(posx);
     Serial.print("posy ");
     Serial.println(posy);
-    servox.write(posx);
-    servoy.write(posy);
+
 }
-
-
-
-
